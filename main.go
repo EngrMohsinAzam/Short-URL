@@ -12,14 +12,14 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("❌ Error loading .env file")
+	// Load .env if it exists (local dev)
+	// On Railway env variables are injected automatically
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️ No .env file found — using environment variables")
 	}
 
 	config.ConnectDB()
 
-	// ✅ Start cron jobs in background
 	utils.StartCronJobs()
 
 	r := gin.Default()
@@ -33,6 +33,14 @@ func main() {
 
 	routes.SetupRoutes(r)
 
-	port := os.Getenv("APP_PORT")
+	// Use Railway's PORT variable or fallback to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = os.Getenv("APP_PORT")
+	}
+	if port == "" {
+		port = "8080"
+	}
+
 	r.Run(":" + port)
 }
