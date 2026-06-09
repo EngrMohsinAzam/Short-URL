@@ -52,7 +52,7 @@ func GetAnalytics(c *gin.Context) {
 			"id":           shortURL.ID,
 			"short_code":   shortURL.ShortCode,
 			"original_url": shortURL.OriginalURL,
-			"short_url":    "http://localhost:8080/" + shortURL.ShortCode,
+			"short_url":    getAppURL() + "/" + shortURL.ShortCode,
 			"expires_at":   shortURL.ExpiresAt,
 		},
 		"analytics": gin.H{

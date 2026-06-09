@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/haseeb/url-shortener/config"
 	"github.com/haseeb/url-shortener/routes"
@@ -18,11 +19,26 @@ func main() {
 		log.Println("⚠️ No .env file found — using environment variables")
 	}
 
+	if os.Getenv("JWT_SECRET") == "" {
+		log.Fatal("JWT_SECRET must be set")
+	}
+
 	config.ConnectDB()
 
 	utils.StartCronJobs()
 
 	r := gin.Default()
+
+	// ─── CORS ─────────────────────────────────────────────
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:3000",       // local frontend
+			"https://your-app.vercel.app", // replace with your Vercel URL after deploy
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	}))
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{

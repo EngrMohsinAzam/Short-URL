@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -14,8 +15,21 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+func jwtSecret() ([]byte, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return nil, fmt.Errorf("JWT_SECRET is not set")
+	}
+	return []byte(secret), nil
+}
+
 // GenerateToken creates a JWT token for a user
 func GenerateToken(userID uint, email string) (string, error) {
+	secret, err := jwtSecret()
+	if err != nil {
+		return "", err
+	}
+
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
@@ -26,17 +40,21 @@ func GenerateToken(userID uint, email string) (string, error) {
 		},
 	}
 
-	// Create token with our secret key from .env
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return token.SignedString(secret)
 }
 
 // VerifyToken checks if a token is valid and returns the claims
 func VerifyToken(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 
+	secret, err := jwtSecret()
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return secret, nil
 	})
 
 	if err != nil || !token.Valid {
